@@ -15,6 +15,7 @@ boolean menu = true;
 // camera game
 Capture video;
 PImage prev;
+PImage vidMirror;
 color track = 0;
 float threshold = 40;
 int nthreshold = 15;
@@ -25,12 +26,15 @@ int r = 100;
 int oldx = w/2;
 int oldy = h/2;
 float[][] dist;
+ArrayList<PVector> points;
 
 void setup() {
   size(640, 480);
   video = new Capture(this, 640, 480, 30);
   video.start();
   prev = createImage(640, 480, RGB);
+  vidMirror = new PImage(video.width,video.height);
+  points = new ArrayList<PVector>();
 }
 
 void mousePressed() {
@@ -56,9 +60,9 @@ void keyPressed() {
     for (int i = -7; i < 8; i++) {
       for (int j = -7; j < 8; j++) {
         count++;
-        c_r+=red(video.pixels[w/2+i+(h/2+j)*video.width]);
-        c_g+=green(video.pixels[w/2+i+(h/2+j)*video.width]);
-        c_b+=blue(video.pixels[w/2+i+(h/2+j)*video.width]);
+        c_r+=red(vidMirror.pixels[w/2+i+(h/2+j)*vidMirror.width]);
+        c_g+=green(vidMirror.pixels[w/2+i+(h/2+j)*vidMirror.width]);
+        c_b+=blue(vidMirror.pixels[w/2+i+(h/2+j)*vidMirror.width]);
       }
     }
     track = color(c_r/count, c_g/count, c_b/count);
@@ -68,7 +72,7 @@ void keyPressed() {
 }
 
 void captureEvent(Capture video) {
-  prev.copy(video, 0, 0, video.width, video.height, 0, 0, prev.width, prev.height);
+  prev.copy(vidMirror, 0, 0, vidMirror.width, vidMirror.height, 0, 0, prev.width, prev.height);
   prev.updatePixels();
   video.read();
 }
@@ -82,41 +86,58 @@ void draw() {
     ellipse (oldx, oldy, 10, 10);
     textSize(30); 
     text("FUN WITH CV", 220, 100);
+    textSize(20);
+    text("by Tyler Wang", 250, 140);
     textAlign(LEFT);
     button("Start", 220, 370, 200, 80, 30);
     return;
   }
-    video.loadPixels();
-    prev.loadPixels();
-    image(video, 0, 0);
-    dist = new float[w][h];
-    noFill();
-    rect(oldx-r, oldy-r, 2*r, 2*r);
-    if (track != 0) {
-      for (int y = oldy+r; y > oldy-r; y-- ) {
-        for (int x = oldx-r; x < oldx+r; x++ ) {
-          if (x>2 & y>2 & x<w-2 & y<h-2) {
-            color current = video.pixels[x + y*video.width];
-            float r = red(current);
-            float g = green(current);
-            float b = blue(current);
-            dist[x][y] = distSq(r, g, b, red(track), green(track), blue(track));
-            if (dist[x][y]<threshold * threshold) {
-              if (sameNeighbors(x, y)>nthreshold & sameNeighbors(x, y)<ncap) {
-                oldx = x;
-                oldy = y;
-              }
+  video.loadPixels();
+  for(int x = 0; x < video.width; x++){
+    for(int y = 0; y < video.height; y++){
+      vidMirror.pixels[x+y*video.width] = video.pixels[(video.width-(x+1))+y*video.width];
+    }
+  }
+  vidMirror.updatePixels();
+  prev.loadPixels();
+  image(vidMirror, 0, 0);
+  dist = new float[w][h];
+  noFill();
+  rect(oldx-r, oldy-r, 2*r, 2*r);
+  if (track != 0) {
+    for (int y = oldy+r; y > oldy-r; y-- ) {
+      for (int x = oldx-r; x < oldx+r; x++ ) {
+        if (x>2 & y>2 & x<w-2 & y<h-2) {
+          color current = vidMirror.pixels[x + y*vidMirror.width];
+          float r = red(current);
+          float g = green(current);
+          float b = blue(current);
+          dist[x][y] = distSq(r, g, b, red(track), green(track), blue(track));
+          if (dist[x][y]<threshold * threshold) {
+            if (sameNeighbors(x, y)>nthreshold & sameNeighbors(x, y)<ncap) {
+              oldx = x;
+              oldy = y;
             }
           }
         }
       }
-      fill(track);
-    } else {
-      fill(random(255), random(255), random(255));
     }
-    stroke(255);
-    strokeWeight(2);
-    ellipse (oldx, oldy, 10, 10);
+    points.add(new PVector(oldx, oldy));
+    fill(track);
+  } else {
+    fill(random(255), random(255), random(255));
+    textSize(18); 
+    text("PLACE YOUR\nCOLOR WAND\n\n\nON THE ORB\nPRESS SPACE", 320, 180);
+    textAlign(CENTER);
+
+  }
+  stroke(255);
+  strokeWeight(2);
+  ellipse (oldx, oldy, 10, 10);
+  for (PVector p:points){
+    fill(0);
+    ellipse (p.x, p.y, 5, 5);
+  }
 }
 
 float distSq(float x1, float y1, float z1, float x2, float y2, float z2) {
