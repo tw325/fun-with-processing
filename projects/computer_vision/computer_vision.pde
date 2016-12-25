@@ -1,11 +1,13 @@
-// captures live video using the camera and Processing's video library
+// captures live video using the camera and Processing's Video library
+// threshold and nthreshold determine exactness of rectangle
+// CLICK ON A PIXEL, AND SEE A QUANDRANGLE FORMED BY PIXELS OF SIMILAR COLOR
 import processing.video.*;
 
 Capture video;
 
-color postit = #ADFF2F;
-float threshold = 120;
-int nthreshold = 4;
+color track;
+float threshold = 50;
+int nthreshold = 16;
 int w = 640;
 int h = 480;
 float[][] dist;
@@ -17,9 +19,8 @@ void setup() {
 }
 
 void mousePressed() {
-  color c = get(mouseX, mouseY);
-  print (hex(c));
-  ellipse(mouseX, mouseY, 16, 16);
+  int loc = mouseX + mouseY*video.width;
+  track = video.pixels[loc];
 }
 
 void captureEvent(Capture video) {
@@ -32,13 +33,13 @@ void draw() {
   dist = new float[w][h];
   int lowXx = w + 50;
   int lowXy = -50;
-  
+
   int lowYx = -50;
   int lowYy = h + 50;
-  
+
   int highXx = -50;
   int highXy = -50;
-  
+
   int highYx = -50;
   int highYy = -50;
 
@@ -48,11 +49,11 @@ void draw() {
       float r = red(current);
       float g = green(current);
       float b = blue(current);
-      dist[x][y] = distSq(r, g, b, red(postit), green(postit), blue(postit));
+      dist[x][y] = distSq(r, g, b, red(track), green(track), blue(track));
     }
   }
-  for (int x = 0; x < w; x+=2 ) {
-    for (int y = 0; y < h; y+=2 ) {
+  for (int x = 2; x < w-2; x++) {
+    for (int y = 2; y < h-2; y++) {
       if (dist[x][y]<threshold * threshold) {
         if (x<lowXx & sameNeighbors(x, y)>nthreshold) {
           lowXx = x;
@@ -87,12 +88,12 @@ float distSq(float x1, float y1, float z1, float x2, float y2, float z2) {
 }
 
 int sameNeighbors(int x, int y) {
-  if (x<1 || x>=w || y<1 || x>= w){
+  if (x<2 || x>=w-1 || y<2 || x>= w-1) {
     return 0;
   }
   int count = 0;
-  for (int i = -1; i < 2; i++) {
-    for (int j = -1; j < 2; j++) {
+  for (int i = -2; i < 3; i++) {
+    for (int j = -2; j < 3; j++) {
       if (dist[x+i][y+j]<threshold * threshold) {
         count++;
       }
