@@ -1,4 +1,7 @@
 # fun-with-processing
-Using the open source Processing language
+### By Tyler Wang
 
-href(projects/pen_game/signature.png)
+Computer vision programs written using the open source Processing language's Video library.
+
+EXAMPLE: Color Object Tracking
+![png](projects/pen_game/signature.png)
