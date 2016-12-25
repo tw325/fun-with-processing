@@ -6,8 +6,8 @@ import processing.video.*;
 Capture video;
 
 color track;
-float threshold = 50;
-int nthreshold = 16;
+float threshold = 20;
+int nthreshold = 10;
 int w = 640;
 int h = 480;
 float[][] dist;
