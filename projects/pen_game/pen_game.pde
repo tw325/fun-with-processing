@@ -20,7 +20,11 @@ boolean menu = true;
 //picture
 boolean picture = false;
 
-// camera game
+// apple game
+int numApples = 20;
+Apple[] Apples = new Apple[numApples];
+boolean apple = false;
+
 boolean game = false;
 Capture video;
 PImage prev;
@@ -48,6 +52,9 @@ void setup() {
   prev = createImage(640, 480, RGB);
   vidMirror = new PImage(video.width, video.height);
   points = new ArrayList<PVector>();
+  for (int i=0; i<Apples.length; i++) {
+    Apples[i] = new Apple(40+random(0, 60));
+  }
 }
 
 void mousePressed() {
@@ -59,6 +66,11 @@ void mousePressed() {
     menu = false;
     picture = true;
     return;
+  }
+  if (apple){
+    for (int i=0; i<Apples.length; i++) {
+      Apples[i] = new Apple(40+random(0, 60));
+    }
   }
   points = new ArrayList<PVector>();
   track = 0;
@@ -73,8 +85,8 @@ void keyPressed() {
     int c_g=0;
     int c_b=0;
     int count = 0;
-    for (int i = -7; i < 8; i++) {
-      for (int j = -7; j < 8; j++) {
+    for (int i = -6; i < 7; i++) {
+      for (int j = -6; j < 7; j++) {
         count++;
         c_r+=red(vidMirror.pixels[w/2+i+(h/2+j)*vidMirror.width]);
         c_g+=green(vidMirror.pixels[w/2+i+(h/2+j)*vidMirror.width]);
@@ -89,6 +101,7 @@ void keyPressed() {
     save(year()+"-"+month()+"-"+day()+"_"+hour()+"h"+minute()+"m"+second()+"s.jpg");
     picture = false;
     game = true;
+    apple = true;
     m = millis();
     while (millis()<m+1000) {
       stroke(0);
@@ -126,8 +139,10 @@ void draw() {
     }
   }
   vidMirror.updatePixels();
+  
+  //takes photo
   if (picture) {
-    opencv = new OpenCV(this, vidMirror);
+    /*opencv = new OpenCV(this, vidMirror);
     opencv.loadCascade(OpenCV.CASCADE_FRONTALFACE);  
     faces = opencv.detect();
     image(opencv.getInput(), 0, 0);
@@ -137,17 +152,19 @@ void draw() {
     strokeWeight(3);
     for (int i = 0; i < faces.length; i++) {
       rect(faces[i].x, faces[i].y, faces[i].width, faces[i].height);
-    }
+    }*/
+    image(vidMirror, 0, 0);
     return;
   }
+  
+  //game mode on
   if (game) {
     prev.loadPixels();
-
     image(vidMirror, 0, 0);
     dist = new float[w][h];
-    noFill();
-    rect(oldx-r, oldy-r, 2*r, 2*r);
     if (track != 0) {
+      
+      //tracks motion within square box
       for (int y = oldy+r; y > oldy-r; y-- ) {
         for (int x = oldx-r; x < oldx+r; x++ ) {
           if (x>2 & y>2 & x<w-2 & y<h-2) {
@@ -165,9 +182,43 @@ void draw() {
           }
         }
       }
+      
+      //apple game
+      if (apple){
+        int collectedapples=0;
+        for (int i=0; i<Apples.length; i++) {
+          Apple a = Apples[i];
+          if (a.disp == false){
+            collectedapples++;
+          } else{
+            a.descend();
+            //apple touches ground
+            if (a.y>h-a.size/2){
+              apple = false;
+            }
+            if (distSq(oldx, oldy, 0, a.x, a.y, 0)<a.size*a.size/4){
+              println ("false");
+              a.disp = false;
+            }
+            a.display();
+          }
+        }
+        if (collectedapples >=15) {
+          textSize(50);
+          fill(255);
+          int time = millis();
+          while (time+1000>millis()){
+            text("you win", 220, 150);
+          }
+          apple=false;
+        }
+      }
+      
       points.add(new PVector(oldx, oldy));
       fill(track);
     } else {
+      noFill();
+      rect(oldx-r, oldy-r, 2*r, 2*r);
       fill(random(255), random(255), random(255));
       textSize(18); 
       text("PLACE YOUR\nCOLOR WAND\n\n\nON THE ORB\nPRESS SPACE", 320, 180);
@@ -176,10 +227,10 @@ void draw() {
     stroke(255);
     strokeWeight(2);
     ellipse (oldx, oldy, 10, 10);
-    for (PVector p : points) {
+    /*for (PVector p : points) {
       fill(p.x%256, p.y%256, (p.x+p.y)%256);
       ellipse (p.x, p.y, 10, 10);
-    }
+    }*/
   }
 }
 
