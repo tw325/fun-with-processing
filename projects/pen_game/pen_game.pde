@@ -25,6 +25,9 @@ int numApples = 20;
 Apple[] Apples = new Apple[numApples];
 boolean apple = false;
 
+//drawing game
+boolean draw = false;
+
 boolean game = false;
 Capture video;
 PImage prev;
@@ -195,6 +198,8 @@ void draw() {
             //apple touches ground
             if (a.y>h-a.size/2){
               apple = false;
+              draw = true;
+              points = new ArrayList<PVector>();
             }
             if (distSq(oldx, oldy, 0, a.x, a.y, 0)<a.size*a.size/4){
               println ("false");
@@ -204,19 +209,17 @@ void draw() {
           }
         }
         if (collectedapples >=15) {
-          textSize(50);
-          fill(255);
-          int time = millis();
-          while (time+1000>millis()){
-            text("you win", 220, 150);
-          }
-          apple=false;
+          apple = false;
+          draw = true;
+          points = new ArrayList<PVector>();
         }
       }
       
       points.add(new PVector(oldx, oldy));
       fill(track);
-    } else {
+    } 
+    
+    else {
       noFill();
       rect(oldx-r, oldy-r, 2*r, 2*r);
       fill(random(255), random(255), random(255));
@@ -224,13 +227,18 @@ void draw() {
       text("PLACE YOUR\nCOLOR WAND\n\n\nON THE ORB\nPRESS SPACE", 320, 180);
       textAlign(CENTER);
     }
+    
     stroke(255);
     strokeWeight(2);
     ellipse (oldx, oldy, 10, 10);
-    /*for (PVector p : points) {
-      fill(p.x%256, p.y%256, (p.x+p.y)%256);
-      ellipse (p.x, p.y, 10, 10);
-    }*/
+    if (draw & !picture & !apple){
+      noFill();
+      rect(oldx-r, oldy-r, 2*r, 2*r);
+      for (PVector p : points) {
+        fill(0);
+        ellipse (p.x, p.y, 10, 10);
+      }
+    }
   }
 }
 
